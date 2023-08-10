@@ -3,6 +3,7 @@
 
 import modules.scripts as scripts
 import gradio as gr
+import time
 
 from modules import processing, images, shared, sd_samplers
 from modules.processing import process_images, Processed
@@ -121,7 +122,11 @@ class Script(scripts.Script):
 				# https://github.com/timojl/clipseg/raw/master/weights/rd16-uni.pth
 			
 			# non-strict, because we only stored decoder weights (not CLIP weights)
-			model.load_state_dict(torch.load(d64_file, map_location=torch.device('cuda')), strict=False);			
+			print("loading model")
+			start = time.time()
+			model.load_state_dict(torch.load(d64_file, map_location=torch.device('cuda')), strict=False);
+			end = time.time()
+			print(end - start)
 
 			transform = transforms.Compose([
 				transforms.ToTensor(),
@@ -136,9 +141,13 @@ class Script(scripts.Script):
 			negative_prompt_parts = len(negative_prompts)
 
 			# predict
+			print("inference model")
+			start = time.time()
 			with torch.no_grad():
 				preds = model(img.repeat(prompt_parts,1,1,1), prompts)[0]
 				negative_preds = model(img.repeat(negative_prompt_parts,1,1,1), negative_prompts)[0]
+			end = time.time()
+			print(end - start)
 
 			#tests
 			if (debug):
